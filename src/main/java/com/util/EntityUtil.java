@@ -15,6 +15,8 @@ public class EntityUtil {
 
     private static final char UNDER_LINE_CHAR = '_';
     private static final String EMPTY_STR = "";
+    private static final String GET_STR = "get";
+    private static final String ZERO_STR = "0";
 
     private EntityUtil() {
     }
@@ -89,6 +91,10 @@ public class EntityUtil {
         return map;
     }
 
+    public static void main(String[] args) {
+        System.out.println(dbName2PojoName("a_table"));
+        System.out.println(pojoName2DbName("aTable"));
+    }
 
     /**
      * 数据表字段名转化为对象属性名
@@ -101,23 +107,24 @@ public class EntityUtil {
         if (columnName == null || EMPTY_STR.equals(columnName.trim())) {
             return EMPTY_STR;
         }
-        byte[] bs = columnName.toLowerCase().getBytes();
+        char[] cs = columnName.toCharArray();
         boolean isDown = false;
 
         StringBuilder attrName = new StringBuilder();
-        for (byte b : bs) {
-            /**
-             * 下划线（_）的ASCII码95
-             */
-            if (b == 95) {
+
+        for (char c : cs) {
+
+            if (c == UNDER_LINE_CHAR) {
                 isDown = true;
             } else {
                 if (isDown) {
-                    b -= 32;
+                    //转大写
+                    c -= 32;
                     isDown = false;
                 }
-                attrName.append((char) b);
+                attrName.append(c);
             }
+
         }
         return attrName.toString();
     }
@@ -143,7 +150,7 @@ public class EntityUtil {
                 }
                 return mapNew;
             } else if (iSBaseType(entity)) {
-                mapNew.put("1", entity);
+                mapNew.put(ZERO_STR, entity);
                 return mapNew;
             }
             Map<String, Object> map = getProperty(entity);
@@ -240,14 +247,14 @@ public class EntityUtil {
      * @return
      */
     private static String pojoName2DbName(String key) {
-        byte[] cs = key.getBytes();
+
+        char[] cs = key.toCharArray();
         StringBuilder sb = new StringBuilder();
-        for (byte c : cs) {
-            byte b = c;
-            if (b <= 90 && b >= 65) {
+        for (char c : cs) {
+            if (c <= 90 && c >= 65) {
                 sb.append('_');
             }
-            sb.append((char) b);
+            sb.append(c);
         }
         return sb.toString().toLowerCase();
     }
@@ -329,7 +336,7 @@ public class EntityUtil {
         /**
          * 2,根据熟悉拼装方法名【get + 属性名（属性名首字母大写】
          */
-        String methodName = "get" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
+        String methodName = GET_STR + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 
         try {
             /**
@@ -369,7 +376,7 @@ public class EntityUtil {
                 }
                 Method fieldGetMet = cls.getMethod(fieldGetName, new Class[]{});
                 Object fieldVal = fieldGetMet.invoke(bean, new Object[]{});
-                if (fieldVal != null && !"".equals(fieldVal)) {
+                if (fieldVal != null && !EMPTY_STR.equals(fieldVal)) {
                     varList.add(String.valueOf(fieldVal));
                 }
             } catch (Exception e) {
@@ -393,7 +400,7 @@ public class EntityUtil {
         if (fieldName.charAt(0) == UNDER_LINE_CHAR) {
             startIndex = 1;
         }
-        return "get" + fieldName.substring(startIndex, startIndex + 1).toUpperCase() + fieldName.substring(startIndex + 1);
+        return GET_STR + fieldName.substring(startIndex, startIndex + 1).toUpperCase() + fieldName.substring(startIndex + 1);
     }
 
     /**
